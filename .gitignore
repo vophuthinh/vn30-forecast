@@ -1,0 +1,27 @@
+# Git
+.git/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Models (lớn, không commit)
+models/*.pt
+models/*.bin
+models/*.safetensors
+
+# Results lớn
+results/*.pkl
+
+# macOS
+.DS_Store
+
+# Env
+.env
