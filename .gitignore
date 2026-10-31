@@ -1,27 +1,58 @@
-# Git
-.git/
-
-# Python
+# ─── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .venv/
 venv/
 env/
+*.egg-info/
+dist/
+build/
 
-# Jupyter
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 
-# Models (lớn, không commit)
-models/*.pt
-models/*.bin
-models/*.safetensors
-
-# Results lớn
-results/*.pkl
-
-# macOS
+# ─── macOS ────────────────────────────────────────────────────────────────────
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Env
+# ─── Environment ──────────────────────────────────────────────────────────────
 .env
+.env.local
+
+# ─── Data (large files — download locally with scripts/download_vn30.py) ──────
+data/raw/
+data/processed/
+data/finetune/
+
+# ─── Models ───────────────────────────────────────────────────────────────────
+# Kronos source — clone separately: git clone https://github.com/shiyu-coder/Kronos models/Kronos-repo
+models/Kronos-repo/
+
+# Fine-tune checkpoints (~200MB — not committed)
+models/finetuned/
+
+# ─── Model weight files (catch-all, anywhere in repo) ─────────────────────────
+**/*.pt
+**/*.bin
+**/*.safetensors
+**/*.ckpt
+**/*.pth
+
+# ─── Results (large outputs — regenerate with scripts) ────────────────────────
+results/predictions/
+results/predictions_finetuned/
+results/predictions_logreturn/
+results/multiwindow/
+results/charts/
+
+# Keep analysis reports & key charts (commit these for GitHub visibility)
+!results/analysis/
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+nohup.out
+*.log
+.idea/
+.vscode/
