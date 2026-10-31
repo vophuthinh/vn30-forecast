@@ -47,6 +47,7 @@ results/predictions_finetuned/
 results/predictions_logreturn/
 results/multiwindow/
 results/charts/
+results/charts_*/
 
 # Keep analysis reports & key charts (commit these for GitHub visibility)
 !results/analysis/

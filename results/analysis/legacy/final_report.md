@@ -1,5 +1,7 @@
 # Kronos VN30 — Báo cáo Kết quả Cuối cùng
 
+> ⚠️ **LEGACY — viết tay, số liệu cũ, không còn là kết luận của dự án.** Dựa trên 1 window (Oct 2026) hoặc 5 window (Jun–Oct 2026); bảng và nhận định ("zero-shot thắng", trend MAPE giảm, VIC "restructuring", backtest +4.25%) đã bị bác bởi đánh giá rolling 1200 cặp: xem `../rolling_report.md` và `../baseline_report.md`.
+
 > **Ngày tạo:** 2026-10-31  
 > **Dự án:** Ứng dụng Kronos time-series foundation model cho thị trường chứng khoán Việt Nam (VN30)  
 > **Thư mục:** `/Users/vophuthinh/Code/kronos-vn30`
@@ -41,7 +43,7 @@ Yahoo Finance (.VN)  →  Clean & Normalize  →  Kronos Zero-Shot  →  Fine-Tu
 | POW | 1.17% | 47.4% | 10.44% | 42.1% | +9.27% | −5.3pp | 2.48% | 51.0% | 18.5 |
 | SAB | 1.26% | 42.1% | **0.74%** | 42.1% | **−0.52%** | 0.0pp | 2.07% | 51.0% | 16.4 |
 | VCB | 1.64% | 42.1% | **0.87%** | 31.6% | **−0.77%** | −10.5pp | 3.09% | 51.0% | 8.2 |
-| VNM | 1.73% | 52.6% | — | — | — | — | — | — | — |
+| ?? (duplicate VNM label; TCB should read 2.95% / 50.0% per results/predictions/_metrics.csv) | 1.73% | 52.6% | — | — | — | — | — | — | — |
 | MWG | 1.76% | 52.6% | 2.80% | 47.4% | +1.04% | −5.2pp | 5.81% | 47.0% | 5.7 |
 | GAS | 2.48% | 26.3% | 18.84% | 47.4% | +16.36% | +21.1pp | 7.75% | 48.0% | 11.5 |
 | BID | 2.78% | 26.3% | 19.81% | 36.8% | +17.03% | +10.5pp | 3.68% | 51.0% | 11.4 |

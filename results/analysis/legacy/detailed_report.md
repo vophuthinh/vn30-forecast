@@ -1,5 +1,8 @@
 # BÁO CÁO CHI TIẾT: ỨNG DỤNG KRONOS DỰ BÁO GIÁ CỔ PHIẾU VN30
 
+> ⚠️ **LEGACY — viết tay, số liệu cũ, không còn là kết luận của dự án.** Dựa trên 1 window (Oct 2026) hoặc 5 window (Jun–Oct 2026); bảng và nhận định ("zero-shot thắng", trend MAPE giảm, VIC "restructuring", backtest +4.25%) đã bị bác bởi đánh giá rolling 1200 cặp: xem `../rolling_report.md` và `../baseline_report.md`.
+
+
 **Ngày:** 2026-10-31  
 **Tác giả:** Kronos VN30 Research Pipeline  
 **Thư mục dự án:** `/Users/vophuthinh/Code/kronos-vn30`
