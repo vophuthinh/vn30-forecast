@@ -38,10 +38,12 @@
 
 **What this project does:**
 - Downloads and cleans ~5 years of daily OHLCV data for all 30 VN30 tickers (Yahoo Finance)
-- Runs **three inference approaches**: Zero-Shot, Fine-Tuned, and Log-Return normalization
-- Conducts a **5-window walk-forward evaluation** (150 ticker-window pairs) for robust out-of-sample assessment
-- Implements a **signal-based backtest** vs. Buy & Hold
-- Provides a complete set of charts, heatmaps, and analysis reports
+- Runs Kronos zero-shot, fine-tuned (v1/v2/v3), log-return input, and parameter variants
+- **Rolling evaluation:** 30 tickers × 40 non-overlapping 20-day windows (1200 forecasts) against a naive random-walk baseline, with window-clustered bootstrap CIs
+- Backtests the *actual* Kronos signals (long-only and long/short) against buy & hold
+- Keeps the earlier single-window and 5-window runs as clearly marked legacy results
+
+**Bottom line:** Kronos-small does not beat a naive random walk on VN30 daily closes at a 20-day horizon, with or without fine-tuning or the tested input/sampling variants.
 
 **Model:** [`NeoQuasar/Kronos-small`](https://huggingface.co/NeoQuasar/Kronos-small) (~24.7M params, BSQ tokenization) + [`NeoQuasar/Kronos-Tokenizer-base`](https://huggingface.co/NeoQuasar/Kronos-Tokenizer-base)
 
@@ -51,42 +53,34 @@
 
 ## 📊 Key Results
 
-> ⚠️ **Read first — headline result.** Rolling evaluation: 30 tickers × 40 non-overlapping 20-day windows (Aug 2023 – Oct 2026, 1200 pairs; [rolling_report.md](results/analysis/rolling_report.md)). Kronos zero-shot is **worse than a naive random walk**: MAPE 9.01% vs 4.35% (gap +4.66pp, 95% CI [4.14, 5.20]; Kronos wins 27% of pairs). 20-day direction hit 51.6% [48.8, 54.4] ≈ always-up 52.2% ≈ coin flip. No evidence of forecasting skill. The 5.01% / 46.0% figures below come from a single 20-day window (Oct 2026) and are descriptive only.
+### 1. Rolling evaluation — zero-shot (1200 pairs, Aug 2023 – Oct 2026)
 
-### Approach Comparison (30 VN30 Tickers) — legacy, single 20-day window (Oct 2026)
+Source: [rolling_report.md](results/analysis/rolling_report.md). Brackets = 95% bootstrap CI resampling whole windows (tickers in a window move together).
 
-| Approach | Avg MAPE ↓ | Avg DirAcc ↑ | Notes |
+| Metric | Kronos zero-shot | Baseline |
+|---|---|---|
+| Mean MAPE | 9.01% [7.89, 10.25] | naive random walk 4.35% [3.89, 4.85] |
+| MAPE gap | +4.66pp [3.76, 5.70] | Kronos better in 27% of pairs |
+| 20-day direction hit | 51.6% [47.3, 56.1] | always-up 52.2%, coin flip 50% |
+
+Kronos is clearly worse than naive on accuracy and shows no directional skill.
+
+### 2. Fine-tuning and variants (360 pairs, last 12 windows)
+
+| Model / variant | MAPE | Direction hit | Naive MAPE |
 |---|---|---|---|
-| 🥇 **Zero-Shot (ZS)** | **5.01%** | **46.0%** | Best overall — no training needed |
-| Log-Return Norm. (LR) | 5.78% | 45.1% | Slight regression from ZS |
-| Fine-Tune v1 (FT) | 8.34% | 42.3% | Overfit — hurt 23/30 tickers |
+| Zero-shot (default) | 9.75% | 51.9% | 4.82% |
+| FT v2 (patience 3) | 9.80% | 47.5% | 4.82% |
+| FT v3 (clean split: train ≤ 2025-06, val 2025-07→10, test unseen) | 9.02% | 45.8% | 4.82% |
+| Log-return input | 8.08% | 50.3% | 4.82% |
+| Lookback 200 (best) | 6.96% | 50.0% | 4.82% |
+| Lookback 100 | 9.31% | 54.4% | 4.82% |
+| Temperature 0.5 | 9.07% | 46.7% | 4.82% |
+| 20 samples | 9.76% | 46.7% | 4.82% |
 
-### Legacy 5-Window Evaluation (Jun–Oct 2026, 5 Windows × 30 Tickers)
+Some variants reduce MAPE (lookback 200: −2.80pp, CI [−3.41, −2.13]); none reaches the naive level, and none has a direction hit clearly above 50%. Variants were tried on the same windows, so treat them as exploratory.
 
-> Only 19–20 observations per ticker; per-ticker rankings below are noise-level (std error of DirAcc ≈ ±11pp). Prefer the rolling results above.
-
-**Best by MAPE (accuracy):**
-
-| Rank | Ticker | Mean MAPE | Sector |
-|---|---|---|---|
-| 1 | **SAB** | 2.07% | Consumer Staples |
-| 2 | **POW** | 2.48% | Utilities |
-| 3 | **ACB** | 2.68% | Banking |
-| 4 | **MSN** | 3.03% | Conglomerate |
-| 5 | **CTG** | 3.05% | Banking |
-
-**Best by Directional Accuracy (signal quality):**
-
-| Rank | Ticker | Mean DirAcc | Std |
-|---|---|---|---|
-| 1 | **STB** | 56% | — |
-| 2 | **MBB** | 55% | 5% |
-| 3 | **PLX** | 54% | — |
-| 4 | **VHM** | 53% | — |
-
-> ⚠️ **No ticker met strict reliability criteria (DirAcc > 55% AND std < 10%) simultaneously.** Kronos zero-shot signals should be used as a weak supplementary signal, not a standalone trading system.
-
-### Backtest with real Kronos signals (40 rolling periods, 30 tickers, 0.1%/side cost)
+### 3. Backtest with real Kronos signals (40 rolling periods, 30 tickers, 0.1%/side cost)
 
 | Strategy | Total return | Ann. Sharpe | Max DD |
 |---|---|---|---|
@@ -95,7 +89,11 @@
 | Kronos long/short (top 5 / bottom 5) | −40.2% | −1.02 | −42.8% |
 | 5d-momentum long/short (baseline) | −33.0% | −0.95 | −32.3% |
 
-Kronos long-only trails buy & hold by 0.78pp per period (95% CI [−1.96, +0.44]): not distinguishable from zero; its lower drawdown comes mainly from sitting in cash part of the time. Kronos L/S loses money. Details: [rolling_report.md](results/analysis/rolling_report.md). The earlier single-ticker VCB result (+4.25% vs −11.15%) used a momentum proxy and is kept in [backtest_report.md](results/analysis/backtest_report.md) for reference only.
+Long-only trails buy & hold by 0.78pp per period (CI [−1.96, +0.44]); its lower drawdown mostly reflects time spent in cash. Long/short loses money. Higher costs (up to 0.5%/side) do not change the picture.
+
+### Legacy results (do not rely on these)
+
+Single 20-day window (Oct 2026): Zero-shot MAPE 5.01% / DirAcc 46.0%, Log-Return 5.78% / 45.1%, Fine-tune v1 8.34% / 42.3%. 5-window run (Jun–Oct 2026, 150 pairs): per-ticker rankings are noise-level (19–20 observations per ticker, DirAcc std error ≈ ±11pp). The earlier VCB backtest (+4.25% vs −11.15%) used a momentum proxy, not Kronos signals ([backtest_report.md](results/analysis/backtest_report.md)). Stale hand-written reports are in [results/analysis/legacy/](results/analysis/legacy/).
 
 ---
 
@@ -105,8 +103,8 @@ Kronos long-only trails buy & hold by 0.78pp per period (95% CI [−1.96, +0.44]
 
 ```bash
 # Clone this repo
-git clone https://github.com/<your-username>/kronos-vn30.git
-cd kronos-vn30
+git clone https://github.com/vophuthinh/vn30-forecast.git
+cd vn30-forecast
 
 # Clone Kronos source (required)
 git clone https://github.com/shiyu-coder/Kronos models/Kronos-repo
@@ -285,7 +283,7 @@ device        = "mps"  # or "cpu" / "cuda"
 
 ---
 
-## 🔬 Detailed Results
+## 🔬 Detailed Results (legacy 5-window run)
 
 ### Multi-Window MAPE Trend
 
@@ -424,7 +422,7 @@ pip install -r requirements.txt
 **Hardware:**
 - Developed and tested on **Apple Silicon (M-series)** — MPS acceleration used automatically
 - Also works on CPU (slower) and CUDA GPU
-- Zero-shot inference for 30 tickers: ~5–10 minutes on M-series
+- Rolling evaluation (1200 forecasts, 10 samples): ~90 min on M-series (MPS); one 20-day forecast per ticker takes seconds
 
 ---
 
