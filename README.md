@@ -53,7 +53,7 @@
 
 > ⚠️ **Read first — headline result.** Rolling evaluation: 30 tickers × 40 non-overlapping 20-day windows (Aug 2023 – Oct 2026, 1200 pairs; [rolling_report.md](results/analysis/rolling_report.md)). Kronos zero-shot is **worse than a naive random walk**: MAPE 9.01% vs 4.35% (gap +4.66pp, 95% CI [4.14, 5.20]; Kronos wins 27% of pairs). 20-day direction hit 51.6% [48.8, 54.4] ≈ always-up 52.2% ≈ coin flip. No evidence of forecasting skill. The 5.01% / 46.0% figures below come from a single 20-day window (Oct 2026) and are descriptive only.
 
-### Approach Comparison (30 VN30 Tickers)
+### Approach Comparison (30 VN30 Tickers) — legacy, single 20-day window (Oct 2026)
 
 | Approach | Avg MAPE ↓ | Avg DirAcc ↑ | Notes |
 |---|---|---|---|
@@ -145,7 +145,11 @@ python scripts/kronos_inference_finetuned.py --exp-name vn30_ft
 # Primary: rolling zero-shot evaluation (1200 pairs, ~90 min on M-series) + baselines + Kronos backtest
 python scripts/rolling_eval.py --windows 40
 python scripts/rolling_eval.py --windows 40 --ft vn30_v2_patience3 --min-start 2025-11-01   # optional: fine-tuned, out-of-training windows
+python scripts/rolling_eval.py --windows 12 --logret --tag lr          # variants (see rolling_report.md section 4)
+python scripts/rolling_eval.py --windows 12 --lookback 200 --tag lb200  # also: --temp 0.5 --tag t05, --samples 20 --tag s20
+python scripts/finetune_kronos.py --exp-name vn30_v3_cleansplit --epochs 5 --patience 3 --tok-patience 3 --train-end 2025-06-30 --val-end 2025-10-31   # clean-split fine-tune
 python scripts/rolling_report.py        # -> results/analysis/rolling_report.md
+python tests/test_rolling.py            # sanity checks on rolling outputs
 
 # Legacy: 5-window evaluation and 5-window baseline check
 python scripts/multiwindow_eval.py
@@ -309,6 +313,17 @@ MAPE by window (naive random walk in brackets). Differences between months refle
 
 ## 🔬 Fine-Tuning Analysis
 
+### Current result (rolling, out-of-training windows, 360 pairs)
+
+| Model | MAPE | Direction hit | vs zero-shot MAPE |
+|---|---|---|---|
+| Zero-shot | 9.75% | 51.9% | — |
+| FT v2 (train ≤ 2025-10, patience 3) | 9.80% | 47.5% | +0.05pp, CI [−0.82, 0.86] |
+| FT v3 (clean split: train ≤ 2025-06, val 2025-07→10, test unseen) | 9.02% | 45.8% | −0.73pp, CI [−1.37, −0.12] |
+| Naive random walk | 4.82% | always-up 48.1% | — |
+
+v3 gives a small MAPE gain that is statistically detectable but economically irrelevant (still ~2× the naive error), and direction accuracy falls below 50%. Numbers below this table are from the legacy single-window run (v1).
+
 ### Where Fine-Tuning Helped (7/30 tickers)
 
 | Ticker | MAPE Δ (pp) |
@@ -331,7 +346,9 @@ MAPE by window (naive random walk in brackets). Differences between months refle
 | GAS | +9.3 |
 | ... | ... |
 
-### Root Causes
+### Root Causes (hypotheses for v1 only, untested)
+
+> v3 used patience 3 and a clean split and still did not approach the naive baseline, so these causes do not fully explain the result.
 
 - `patience=1` → premature early stopping, model never fully converged
 - Joint training on 30 heterogeneous tickers → conflicting gradient updates
@@ -362,19 +379,19 @@ MAPE by window (naive random walk in brackets). Differences between months refle
 
 1. **Zero-shot is the best of the three Kronos variants** (MAPE 5.01% on the single 20-day Oct-2026 run), but see conclusion 7: it does not beat a naive baseline.
 
-2. **Fine-tuning is a double-edged sword.** v1 (aggressive early stopping, joint training) hurt 23/30 tickers. Careful per-ticker or grouped fine-tuning with patience=3+ is needed.
+2. **Fine-tuning does not rescue Kronos.** v1 hurt 23/30 tickers on one window. With patience 3 and a clean train/val/test split (v3), MAPE improves 0.73pp (9.75 → 9.02%) but stays far above naive (4.82%) and direction hit is 45.8%. Per-ticker / grouped fine-tuning was not tried.
 
 3. **No ticker is reliably tradeable standalone.** The best directional accuracy (STB at 56%) is just above random. Use Kronos signals as a weak supplementary factor in a broader framework.
 
 4. **VIC is a trend outlier** (mean MAPE 41.78%): a ~9× rally with no data break (checked in `data/processed/VIC.csv`). Earlier "corporate restructuring" explanation had no evidence and is withdrawn.
 
-5. **Log-return normalization does not help.** The reconstruction error from log-return→price cancels any benefit from scale normalization.
+5. **Variants shift MAPE but none beats naive** (360 pairs, same windows; [rolling_report.md §4](results/analysis/rolling_report.md)): log-return input 8.08% (−1.67pp vs 9.75%), lookback 200 6.96% (−2.80pp), temperature 0.5 9.07%, lookback 100 9.31% (not significant), 20 samples 9.76% (no effect). The lookback gain is not monotonic (100 ≈ default, 200 best), which suggests noise or a context-length quirk rather than a tuning direction. These were tried on the same test windows, so treat as exploratory. The earlier claim that log-return normalization hurts came from one window and is withdrawn.
 
 6. **Kronos signals do not beat buy & hold** in a 40-period backtest with real predictions: long-only +10.6% vs +43.9%, long/short −40.2%.
 
 7. **Kronos zero-shot loses to a naive random walk** on 1200 rolling pairs (MAPE 9.01% vs 4.35%, direction hit 51.6% ≈ always-up 52.2%). Earlier "zero-shot wins" applies only among the three Kronos variants.
 
-8. **Fine-tuning (v2, patience 3) does not help either.** On 360 out-of-training pairs (windows starting ≥ 2025-11-01): FT MAPE 9.80% vs ZS 9.75% (diff +0.05pp, CI [−0.79, 0.88]), FT direction hit 47.5% vs ZS 51.9%. The val set used for checkpoint selection overlaps these windows, so FT is if anything slightly favoured.
+8. **Best case still loses to naive.** Best variant (lookback 200) MAPE 6.96% vs naive 4.82%; no variant has direction hit clearly above 50%. Forecasting daily-close paths 20 days ahead with this model on VN30 shows no demonstrated skill.
 
 ---
 

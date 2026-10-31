@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""
+"""LEGACY: evaluates a single 20-day window (Oct 2026) or 5 windows (Jun-Oct 2026) with no baselines.
+Results are noise-level; use scripts/rolling_eval.py + scripts/rolling_report.py instead.
+
 Kronos Zero-Shot Inference — VN30
 ===================================
 Chạy dự báo giá cổ phiếu với Kronos-small (zero-shot, không cần train).

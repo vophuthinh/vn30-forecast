@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""
+"""LEGACY: Strategy A/B/C use a 5-day momentum proxy for 2021-2025; only the last 20 days use Kronos signals.
+For Kronos-signal backtests see scripts/rolling_report.py.
+
 Kronos VN30 Walk-Forward Backtesting Engine
 ============================================
 - Strategy A: Kronos Signal (full capital, from momentum proxy on history + Oct-26 actuals)

@@ -81,6 +81,7 @@ ALL_TICKERS = sorted(f.stem for f in DATA_DIR.glob("*.csv") if f.stem != "_summa
 FEATURE_COLS = ["open", "high", "low", "close", "volume", "amount"]
 TRAIN_END    = "2025-10-31"
 VAL_START    = "2025-11-01"
+VAL_END      = None   # set by --val-end: rows after this date are dropped (keeps test windows unseen)
 
 
 class VN30Dataset(Dataset):
@@ -117,6 +118,8 @@ class VN30Dataset(Dataset):
             for p in csv_paths:
                 try:
                     _df = pd.read_csv(p, parse_dates=["date"])
+                    if VAL_END:
+                        _df = _df[_df["date"] <= VAL_END]
                     _n = len(_df)
                     _dates = pd.to_datetime(_df["date"])
                     _train_end = int((_dates <= TRAIN_END).sum())
@@ -131,6 +134,8 @@ class VN30Dataset(Dataset):
         for path in csv_paths:
             df = pd.read_csv(path, parse_dates=["date"])
             df = df.sort_values("date").reset_index(drop=True)
+            if VAL_END:
+                df = df[df["date"] <= VAL_END].reset_index(drop=True)
             df[FEATURE_COLS] = df[FEATURE_COLS].ffill().bfill()
 
             # Timestamp features — must match TemporalEmbedding(module.py):
@@ -491,7 +496,14 @@ def main():
                         help="Early stopping patience for predictor (default: 1)")
     parser.add_argument("--tok-patience",   type=int,   default=2,
                         help="Early stopping patience for tokenizer (default: 2)")
+    parser.add_argument("--train-end", type=str, default=None,
+                        help="Last train date (default 2025-10-31)")
+    parser.add_argument("--val-end", type=str, default=None,
+                        help="Last val date; later rows are never used (default: use all data)")
     args = parser.parse_args()
+    global TRAIN_END, VAL_END
+    TRAIN_END = args.train_end or TRAIN_END
+    VAL_END = args.val_end
 
     # ── Resolve tickers & paths ──
     tickers = sorted({t.upper() for t in (args.tickers or ALL_TICKERS)})
