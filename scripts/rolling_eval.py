@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--lookback", type=int, default=400)
     ap.add_argument("--logret", action="store_true", help="feed log-returns, reconstruct prices (kronos_logreturn_inference transforms)")
     ap.add_argument("--tag", default="", help="output suffix paths_<tag>.csv (default: paths.csv, or paths_ft_<exp> with --ft)")
+    ap.add_argument("--model", default="NeoQuasar/Kronos-small", help="HF zero-shot model id, e.g. NeoQuasar/Kronos-base (ignored with --ft)")
     ap.add_argument("--real-dates", action="store_true", help="y_timestamp = actual trading dates of the target (default: bdate_range)")
     a = ap.parse_args()
     LOOKBACK = a.lookback
@@ -46,9 +47,9 @@ def main():
     tickers = a.tickers.split(",") if a.tickers else sorted(p.stem for p in PROC.glob("*.csv") if not p.stem.startswith("_"))
     out_path = BASE / "results" / "rolling" / (f"paths_{a.tag}.csv" if a.tag else f"paths_ft_{a.ft}.csv" if a.ft else "paths.csv")
     ck = BASE / "models" / "finetuned" / a.ft
-    model_src = str(ck / "basemodel" / "best_model") if a.ft else "NeoQuasar/Kronos-small"
+    model_src = str(ck / "basemodel" / "best_model") if a.ft else a.model
     tok_src = str(ck / "tokenizer" / "best_model") if a.ft else "NeoQuasar/Kronos-Tokenizer-base"
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     pred = KronosPredictor(Kronos.from_pretrained(model_src), KronosTokenizer.from_pretrained(tok_src),
                            device=device, max_context=512)
 
