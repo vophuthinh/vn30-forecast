@@ -272,14 +272,14 @@ device        = "mps"  # or "cpu" / "cuda"
 - **Primary evaluation (`rolling_eval.py`):** 40 consecutive non-overlapping 20-day windows per ticker (Aug 2023 – Oct 2026), 1200 pairs, context = preceding 400 days, 10 samples, fixed seeds, predicted paths saved to `results/rolling/paths.csv`
 - Legacy `multiwindow_eval.py`: 5 windows, Jun–Oct 2026 only (`multiwindow_eval.WINDOWS`)
 - Zero-shot, so no training and no expanding window; every window uses the preceding 400 days as context
-- 150 ticker-window pairs in total (30 tickers × 5 windows)
+- Legacy run: 150 ticker-window pairs in total (30 tickers × 5 windows)
 - Metrics: **MAPE** (accuracy), **DirAcc** (directional accuracy), **Std** (consistency)
 
 ### 4. Evaluation Metrics
 
 | Metric | Formula | Interpretation |
 |---|---|---|
-| MAPE | `mean(|y_pred - y_true| / y_true)` | Lower = more accurate |
+| MAPE | `mean(abs(y_pred - y_true) / y_true)` | Lower = more accurate |
 | DirAcc | `mean(sign(pred_delta) == sign(true_delta))` | >50% = better than random |
 | Std (DirAcc) | std across windows | Lower = more consistent signal |
 
