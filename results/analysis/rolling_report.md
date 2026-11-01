@@ -117,9 +117,9 @@ Per period:
 
 | Metric | Zero-shot | Fine-tuned | Naive |
 |---|---|---|---|
-| MAPE % | 9.75 [8.56, 11.06] | 9.80 [8.95, 10.68] | 4.82 [4.37, 5.28] |
-| 20d direction hit % | 51.9 [46.9, 57.2] | 47.5 [42.5, 52.5] | always-up 48.1 [43.1, 53.3] |
-| FT - ZS MAPE (pp) | | 0.05 [-0.82, 0.86] | FT better in 45% of pairs |
+| MAPE % | 9.75 [8.18, 11.40] | 9.80 [8.68, 11.06] | 4.82 [3.90, 5.86] |
+| 20d direction hit % | 51.9 [44.4, 58.6] | 47.5 [40.6, 54.4] | always-up 48.1 [35.3, 60.6] |
+| FT - ZS MAPE (pp) | | 0.05 [-1.26, 1.40] | FT better in 45% of pairs |
 
 ## 3. Fine-tuned (vn30_v3_cleansplit) vs zero-shot, out-of-training windows only
 
@@ -127,16 +127,28 @@ Per period:
 
 | Metric | Zero-shot | Fine-tuned | Naive |
 |---|---|---|---|
-| MAPE % | 9.75 [8.57, 11.04] | 9.02 [8.12, 9.95] | 4.82 [4.37, 5.31] |
-| 20d direction hit % | 51.9 [46.9, 57.2] | 45.8 [40.6, 50.8] | always-up 48.1 [42.8, 53.3] |
-| FT - ZS MAPE (pp) | | -0.73 [-1.37, -0.12] | FT better in 46% of pairs |
+| MAPE % | 9.75 [8.19, 11.36] | 9.02 [7.61, 10.55] | 4.82 [3.89, 5.85] |
+| 20d direction hit % | 51.9 [44.7, 58.6] | 45.8 [38.1, 54.7] | always-up 48.1 [35.6, 60.6] |
+| FT - ZS MAPE (pp) | | -0.73 [-1.46, -0.05] | FT better in 46% of pairs |
+
+## 3. Fine-tuned (grouped_v3 (banks + others)) vs zero-shot, out-of-training windows only
+
+360 pairs (window start >= 2025-11-01). Clean split: train <= 2025-06-30, val 2025-07-01..2025-10-31, test windows never seen.
+
+| Metric | Zero-shot | Fine-tuned | Naive |
+|---|---|---|---|
+| MAPE % | 9.75 [8.19, 11.42] | 10.06 [8.39, 11.87] | 4.82 [3.92, 5.88] |
+| 20d direction hit % | 51.9 [45.0, 58.9] | 47.5 [39.2, 54.7] | always-up 48.1 [35.0, 60.3] |
+| FT - ZS MAPE (pp) | | 0.30 [-0.16, 0.82] | FT better in 44% of pairs |
 
 ## 4. Variants vs default zero-shot (same pairs)
 
 | Variant | Pairs | Default MAPE % | Variant MAPE % | Variant - default (pp) | Naive MAPE % | Default dir % | Variant dir % |
 |---|---|---|---|---|---|---|---|
-| log-return input | 360 | 9.75 | 8.08 | -1.67 [-3.14, -0.28] | 4.82 | 51.9 | 50.3 |
-| temperature 0.5 | 360 | 9.75 | 9.07 | -0.69 [-0.93, -0.40] | 4.82 | 51.9 | 46.7 |
-| lookback 200 | 360 | 9.75 | 6.96 | -2.80 [-3.41, -2.13] | 4.82 | 51.9 | 50.0 |
-| lookback 100 | 360 | 9.75 | 9.31 | -0.44 [-1.51, +0.62] | 4.82 | 51.9 | 54.4 |
-| 20 samples | 360 | 9.75 | 9.76 | +0.00 [-0.13, +0.12] | 4.82 | 51.9 | 46.7 |
+| log-return input | 360 | 9.75 | 8.08 | -1.67 [-3.19, -0.22] | 4.82 | 51.9 | 50.3 |
+| temperature 0.5 | 360 | 9.75 | 9.07 | -0.69 [-0.94, -0.38] | 4.82 | 51.9 | 46.7 |
+| lookback 200 | 360 | 9.75 | 6.96 | -2.80 [-3.43, -2.14] | 4.82 | 51.9 | 50.0 |
+| lookback 100 | 360 | 9.75 | 9.31 | -0.44 [-1.51, +0.64] | 4.82 | 51.9 | 54.4 |
+| 20 samples | 360 | 9.75 | 9.76 | +0.00 [-0.12, +0.12] | 4.82 | 51.9 | 46.7 |
+| real trading dates for y_timestamp | 360 | 9.75 | 9.76 | +0.00 [-0.00, +0.01] | 4.82 | 51.9 | 52.8 |
+| log-return input, all 40 windows | 1200 | 9.01 | 6.78 | -2.23 [-3.48, -1.18] | 4.35 | 51.6 | 47.3 |

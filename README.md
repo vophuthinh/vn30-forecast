@@ -72,13 +72,15 @@ Kronos is clearly worse than naive on accuracy and shows no directional skill.
 | Zero-shot (default) | 9.75% | 51.9% | 4.82% |
 | FT v2 (patience 3) | 9.80% | 47.5% | 4.82% |
 | FT v3 (clean split: train ≤ 2025-06, val 2025-07→10, test unseen) | 9.02% | 45.8% | 4.82% |
+| FT v3 grouped (banks / others, one model each) | 10.06% | 47.5% | 4.82% |
 | Log-return input | 8.08% | 50.3% | 4.82% |
+| Real trading dates as future timestamps (instead of `bdate_range`) | 9.76% | 52.8% | 4.82% |
 | Lookback 200 (best) | 6.96% | 50.0% | 4.82% |
 | Lookback 100 | 9.31% | 54.4% | 4.82% |
 | Temperature 0.5 | 9.07% | 46.7% | 4.82% |
 | 20 samples | 9.76% | 46.7% | 4.82% |
 
-Some variants reduce MAPE (lookback 200: −2.80pp, CI [−3.41, −2.13]); none reaches the naive level, and none has a direction hit clearly above 50%. Variants were tried on the same windows, so treat them as exploratory.
+Some variants reduce MAPE (lookback 200: −2.80pp, CI [−3.43, −2.14]); none reaches the naive level, and none has a direction hit clearly above 50%. Log-return input was re-run on all 40 windows (1200 pairs): MAPE 6.78% vs 9.01% zero-shot (−2.23pp, CI [−3.48, −1.18]), direction hit 47.3%, naive 4.35% — the MAPE gain is real but small relative to the gap to naive. Lookback 200 was only checked on the last 12 windows. Variants were tried on the same windows, so treat them as exploratory.
 
 ### 3. Backtest with real Kronos signals (40 rolling periods, 30 tickers, 0.1%/side cost)
 
@@ -311,54 +313,23 @@ MAPE by window (naive random walk in brackets). Differences between months refle
 
 ## 🔬 Fine-Tuning Analysis
 
-### Current result (rolling, out-of-training windows, 360 pairs)
+Out-of-training windows only (start ≥ 2025-11-01), 360 pairs, [rolling_report.md §3](results/analysis/rolling_report.md):
 
 | Model | MAPE | Direction hit | vs zero-shot MAPE |
 |---|---|---|---|
 | Zero-shot | 9.75% | 51.9% | — |
 | FT v2 (train ≤ 2025-10, patience 3) | 9.80% | 47.5% | +0.05pp, CI [−0.82, 0.86] |
 | FT v3 (clean split: train ≤ 2025-06, val 2025-07→10, test unseen) | 9.02% | 45.8% | −0.73pp, CI [−1.37, −0.12] |
+| FT v3 grouped (banks / others) | 10.06% | 47.5% | +0.30pp, CI [−0.16, 0.82] |
 | Naive random walk | 4.82% | always-up 48.1% | — |
 
-v3 gives a small MAPE gain that is statistically detectable but economically irrelevant (still ~2× the naive error), and direction accuracy falls below 50%. Numbers below this table are from the legacy single-window run (v1).
-
-### Where Fine-Tuning Helped (7/30 tickers)
-
-| Ticker | MAPE Δ (pp) |
-|---|---|
-| VIC | −13.0 |
-| SSB | −3.0 |
-| MSN | −2.6 |
-| TCB | −1.0 |
-| MWG | −0.7 |
-| VIB | −0.6 |
-| VCB | −0.4 |
-
-### Where Fine-Tuning Hurt (23/30 tickers)
-
-| Ticker | MAPE Δ (pp) |
-|---|---|
-| BID | +17.0 |
-| VRE | +13.0 |
-| SSI | +12.0 |
-| GAS | +9.3 |
-| ... | ... |
-
-### Root Causes (hypotheses for v1 only, untested)
-
-> v3 used patience 3 and a clean split and still did not approach the naive baseline, so these causes do not fully explain the result.
-
-- `patience=1` → premature early stopping, model never fully converged
-- Joint training on 30 heterogeneous tickers → conflicting gradient updates
-- Short regime (3 epochs) → overfit to recent price patterns
-
-### Lesson
-
-> Pre-trained Kronos priors are more valuable than short domain adaptation for VN30. Fine-tuning requires per-ticker or grouped strategies with longer patience.
+Fine-tuning does not close the gap to the naive baseline whether trained jointly or per sector group. Per-ticker fine-tuning (30 separate runs) was not tried. The first fine-tune (v1, one 20-day window) looked much worse (MAPE 8.34% vs 5.01%, hurt 23/30 tickers), but that run used patience 1 and one window, so it is not used for conclusions.
 
 ---
 
-## 📈 Backtest
+## 📈 Backtest (legacy, momentum proxy)
+
+> Superseded by the Kronos-signal backtest in Key Results. Kept for reference.
 
 **Setup:** VCB, long/flat by predicted direction (Strategy A). History 2021–2025 uses a **5-day momentum proxy** as the signal; only the last 20 days use Kronos predictions. The result therefore measures momentum, not Kronos.
 
@@ -377,13 +348,13 @@ v3 gives a small MAPE gain that is statistically detectable but economically irr
 
 1. **Zero-shot is the best of the three Kronos variants** (MAPE 5.01% on the single 20-day Oct-2026 run), but see conclusion 7: it does not beat a naive baseline.
 
-2. **Fine-tuning does not rescue Kronos.** v1 hurt 23/30 tickers on one window. With patience 3 and a clean train/val/test split (v3), MAPE improves 0.73pp (9.75 → 9.02%) but stays far above naive (4.82%) and direction hit is 45.8%. Per-ticker / grouped fine-tuning was not tried.
+2. **Fine-tuning does not rescue Kronos.** With patience 3 and a clean train/val/test split (v3), MAPE improves 0.73pp (9.75 → 9.02%) but stays far above naive (4.82%), direction hit 45.8%. Grouped fine-tuning (banks / others) gives no gain (10.06%). Per-ticker fine-tuning was not tried.
 
 3. **No ticker is reliably tradeable standalone.** The best directional accuracy (STB at 56%) is just above random. Use Kronos signals as a weak supplementary factor in a broader framework.
 
 4. **VIC is a trend outlier** (mean MAPE 41.78%): a ~9× rally with no data break (checked in `data/processed/VIC.csv`). Earlier "corporate restructuring" explanation had no evidence and is withdrawn.
 
-5. **Variants shift MAPE but none beats naive** (360 pairs, same windows; [rolling_report.md §4](results/analysis/rolling_report.md)): log-return input 8.08% (−1.67pp vs 9.75%), lookback 200 6.96% (−2.80pp), temperature 0.5 9.07%, lookback 100 9.31% (not significant), 20 samples 9.76% (no effect). The lookback gain is not monotonic (100 ≈ default, 200 best), which suggests noise or a context-length quirk rather than a tuning direction. These were tried on the same test windows, so treat as exploratory. The earlier claim that log-return normalization hurts came from one window and is withdrawn.
+5. **Variants shift MAPE but none beats naive** (360 pairs, same windows; [rolling_report.md §4](results/analysis/rolling_report.md)): log-return input 8.08% (−1.67pp vs 9.75%), lookback 200 6.96% (−2.80pp), temperature 0.5 9.07%, lookback 100 9.31% (not significant), 20 samples 9.76% (no effect). The lookback gain is not monotonic (100 ≈ default, 200 best), which suggests noise or a context-length quirk rather than a tuning direction. These were tried on the same test windows, so treat as exploratory. On all 40 windows log-return input gives 6.78% vs 9.01% zero-shot (naive 4.35%). The earlier claim that log-return normalization hurts came from one window and is withdrawn. Using real trading dates instead of `bdate_range` for future timestamps changes nothing (9.76% vs 9.75%).
 
 6. **Kronos signals do not beat buy & hold** in a 40-period backtest with real predictions: long-only +10.6% vs +43.9%, long/short −40.2%.
 

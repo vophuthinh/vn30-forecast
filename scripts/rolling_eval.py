@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--lookback", type=int, default=400)
     ap.add_argument("--logret", action="store_true", help="feed log-returns, reconstruct prices (kronos_logreturn_inference transforms)")
     ap.add_argument("--tag", default="", help="output suffix paths_<tag>.csv (default: paths.csv, or paths_ft_<exp> with --ft)")
+    ap.add_argument("--real-dates", action="store_true", help="y_timestamp = actual trading dates of the target (default: bdate_range)")
     a = ap.parse_args()
     LOOKBACK = a.lookback
     if a.logret:
@@ -71,7 +72,7 @@ def main():
                 continue
             torch.manual_seed(SEED + k)
             # ponytail: bdate_range ignores VN holidays; Kronos only uses the calendar features
-            fut = pd.Series(pd.bdate_range(pd.Timestamp(ctx.date.iloc[-1]) + pd.Timedelta(days=1), periods=PRED_LEN))
+            fut = tgt.date.reset_index(drop=True) if a.real_dates else pd.Series(pd.bdate_range(pd.Timestamp(ctx.date.iloc[-1]) + pd.Timedelta(days=1), periods=PRED_LEN))
             kw = dict(y_timestamp=fut, pred_len=PRED_LEN, T=a.temp, top_p=0.9, sample_count=a.samples, verbose=False)
             if a.logret:
                 raw = df.iloc[s - LOOKBACK - 1:s][COLS].reset_index(drop=True)

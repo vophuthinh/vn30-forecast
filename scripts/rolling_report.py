@@ -44,10 +44,12 @@ def ci(x, n=5000, w=None):
     return np.percentile(m, [2.5, 97.5])
 
 
-def fmt(x, p=2):
-    """mean [CI]; x a Series of `d`-aligned pair values -> window-clustered CI."""
-    x = pd.Series(x)
-    lo, hi = ci(x, w=d.window.loc[x.index] if x.index.isin(d.index).all() and len(x) == len(d) else None)
+def fmt(x, p=2, w=None):
+    """mean [CI]; window-clustered CI when w (window id per value) is given or x is aligned with `d`."""
+    x = pd.Series(x).reset_index(drop=True)
+    if w is None and len(x) == len(d):
+        w = d.window
+    lo, hi = ci(x, w=None if w is None else np.asarray(w))
     return f"{x.mean():.{p}f} [{lo:.{p}f}, {hi:.{p}f}]"
 
 
@@ -119,8 +121,12 @@ for _, r in bt.iterrows():
     out.append(f"| {r.start} | {r.bh_ew * 100:.1f} | {r.kronos_long * 100:.1f} | {r.kronos_ls * 100:.1f} | {r.mom_ls * 100:.1f} |")
 
 # ---- fine-tuned checkpoint on windows that start after its training cutoff (2025-10-31)
-for f in sorted((BASE / "results/rolling").glob("paths_ft_*.csv")):
-    ft = pd.read_csv(f)
+RD = BASE / "results/rolling"
+ft_sources = [(f.stem.removeprefix("paths_ft_"), pd.read_csv(f)) for f in sorted(RD.glob("paths_ft_vn30*.csv"))]
+grp = sorted(RD.glob("paths_ft_group_*.csv"))
+if grp:  # grouped fine-tune (banks / others): one model per group, concatenated
+    ft_sources.append(("grouped_v3 (banks + others)", pd.concat([pd.read_csv(f) for f in grp])))
+for name, ft in ft_sources:
     key = ["ticker", "window"]
     m = d.merge(ft[key + [f"pred_{i}" for i in range(PRED_LEN)]], on=key, suffixes=("", "_ft"))
     PF = m[[f"pred_{i}_ft" for i in range(PRED_LEN)]].to_numpy()
@@ -128,16 +134,16 @@ for f in sorted((BASE / "results/rolling").glob("paths_ft_*.csv")):
     m["ft_mape"] = (np.abs(PF - Am) / Am).mean(1) * 100
     m["ft_dir"] = (np.sign(PF[:, -1] / m.last_ctx_close - 1) == np.sign(m.act_ret)) * 100
     g2 = m.ft_mape - m.mape
-    out += ["", f"## 3. Fine-tuned ({f.stem.removeprefix('paths_ft_')}) vs zero-shot, out-of-training windows only\n",
-            (f"{len(m)} pairs (window start >= 2025-11-01). Clean split: train <= 2025-06-30, val 2025-07-01..2025-10-31, test windows never seen.\n" if "cleansplit" in f.stem else
+    out += ["", f"## 3. Fine-tuned ({name}) vs zero-shot, out-of-training windows only\n",
+            (f"{len(m)} pairs (window start >= 2025-11-01). Clean split: train <= 2025-06-30, val 2025-07-01..2025-10-31, test windows never seen.\n" if "cleansplit" in name or "grouped" in name else
              f"{len(m)} pairs (window start >= 2025-11-01; training data ends 2025-10-31 but the val set used for checkpoint selection overlaps these windows, so FT is mildly favoured).\n"),
             "| Metric | Zero-shot | Fine-tuned | Naive |", "|---|---|---|---|",
-            f"| MAPE % | {fmt(m.mape)} | {fmt(m.ft_mape)} | {fmt(m.naive_mape)} |",
-            f"| 20d direction hit % | {fmt(m.dir_hit, 1)} | {fmt(m.ft_dir, 1)} | always-up {fmt(m.up_hit, 1)} |",
-            f"| FT - ZS MAPE (pp) | | {fmt(g2)} | FT better in {(g2 < 0).mean() * 100:.0f}% of pairs |"]
+            f"| MAPE % | {fmt(m.mape, w=m.window)} | {fmt(m.ft_mape, w=m.window)} | {fmt(m.naive_mape, w=m.window)} |",
+            f"| 20d direction hit % | {fmt(m.dir_hit, 1, w=m.window)} | {fmt(m.ft_dir, 1, w=m.window)} | always-up {fmt(m.up_hit, 1, w=m.window)} |",
+            f"| FT - ZS MAPE (pp) | | {fmt(g2, w=m.window)} | FT better in {(g2 < 0).mean() * 100:.0f}% of pairs |"]
 
 # ---- variants on the same (ticker, window) pairs: log-return input, temperature, lookback, samples
-var = {"lr": "log-return input", "t05": "temperature 0.5", "lb200": "lookback 200", "lb100": "lookback 100", "s20": "20 samples"}
+var = {"lr": "log-return input", "t05": "temperature 0.5", "lb200": "lookback 200", "lb100": "lookback 100", "s20": "20 samples", "realdates": "real trading dates for y_timestamp", "lr40": "log-return input, all 40 windows"}
 rows4 = []
 for tag, label in var.items():
     f = BASE / f"results/rolling/paths_{tag}.csv"
