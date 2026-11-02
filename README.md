@@ -76,11 +76,12 @@ Kronos is clearly worse than naive on accuracy and shows no directional skill.
 | Log-return input | 8.08% | 50.3% | 4.82% |
 | Real trading dates as future timestamps (instead of `bdate_range`) | 9.76% | 52.8% | 4.82% |
 | Lookback 200 (best) | 6.96% | 50.0% | 4.82% |
+| Kronos-base (larger model, zero-shot) | 13.34% | 51.1% | 4.82% |
 | Lookback 100 | 9.31% | 54.4% | 4.82% |
 | Temperature 0.5 | 9.07% | 46.7% | 4.82% |
 | 20 samples | 9.76% | 46.7% | 4.82% |
 
-Some variants reduce MAPE (lookback 200: −2.80pp, CI [−3.43, −2.14]); none reaches the naive level, and none has a direction hit clearly above 50%. Log-return input was re-run on all 40 windows (1200 pairs): MAPE 6.78% vs 9.01% zero-shot (−2.23pp, CI [−3.48, −1.18]), direction hit 47.3%, naive 4.35% — the MAPE gain is real but small relative to the gap to naive. Lookback 200 was only checked on the last 12 windows. Variants were tried on the same windows, so treat them as exploratory.
+Some variants reduce MAPE (lookback 200: −2.80pp, CI [−3.43, −2.14]); none reaches the naive level, and none has a direction hit clearly above 50%. Log-return input was re-run on all 40 windows (1200 pairs): MAPE 6.78% vs 9.01% zero-shot (−2.23pp, CI [−3.48, −1.18]), direction hit 47.3%, naive 4.35% — the MAPE gain is real but small relative to the gap to naive. Lookback 200 was only checked on the last 12 windows. A larger model does not help: Kronos-base (zero-shot, all 40 windows, 1200 pairs) has MAPE 12.16% vs 9.01% for Kronos-small (+3.15pp, CI [+2.84, +3.46]) and 4.35% for naive, direction hit 52.8%. Kronos-large is not public, so it was not tested. Variants were tried on the same windows, so treat them as exploratory.
 
 ### 3. Backtest with real Kronos signals (40 rolling periods, 30 tickers, 0.1%/side cost)
 
@@ -354,7 +355,7 @@ Fine-tuning does not close the gap to the naive baseline whether trained jointly
 
 4. **VIC is a trend outlier** (mean MAPE 41.78%): a ~9× rally with no data break (checked in `data/processed/VIC.csv`). Earlier "corporate restructuring" explanation had no evidence and is withdrawn.
 
-5. **Variants shift MAPE but none beats naive** (360 pairs, same windows; [rolling_report.md §4](results/analysis/rolling_report.md)): log-return input 8.08% (−1.67pp vs 9.75%), lookback 200 6.96% (−2.80pp), temperature 0.5 9.07%, lookback 100 9.31% (not significant), 20 samples 9.76% (no effect). The lookback gain is not monotonic (100 ≈ default, 200 best), which suggests noise or a context-length quirk rather than a tuning direction. These were tried on the same test windows, so treat as exploratory. On all 40 windows log-return input gives 6.78% vs 9.01% zero-shot (naive 4.35%). The earlier claim that log-return normalization hurts came from one window and is withdrawn. Using real trading dates instead of `bdate_range` for future timestamps changes nothing (9.76% vs 9.75%).
+5. **Variants shift MAPE but none beats naive** (360 pairs, same windows; [rolling_report.md §4](results/analysis/rolling_report.md)): log-return input 8.08% (−1.67pp vs 9.75%), lookback 200 6.96% (−2.80pp), temperature 0.5 9.07%, lookback 100 9.31% (not significant), 20 samples 9.76% (no effect). The lookback gain is not monotonic (100 ≈ default, 200 best), which suggests noise or a context-length quirk rather than a tuning direction. These were tried on the same test windows, so treat as exploratory. On all 40 windows log-return input gives 6.78% vs 9.01% zero-shot (naive 4.35%). The earlier claim that log-return normalization hurts came from one window and is withdrawn. A larger model is worse, not better: Kronos-base gets 12.16% MAPE on all 40 windows vs 9.01% for Kronos-small and 4.35% for naive (one horizon, one sampling setup, one seed). Using real trading dates instead of `bdate_range` for future timestamps changes nothing (9.76% vs 9.75%).
 
 6. **Kronos signals do not beat buy & hold** in a 40-period backtest with real predictions: long-only +10.6% vs +43.9%, long/short −40.2%.
 

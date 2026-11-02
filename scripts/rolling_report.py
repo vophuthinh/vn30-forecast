@@ -143,7 +143,7 @@ for name, ft in ft_sources:
             f"| FT - ZS MAPE (pp) | | {fmt(g2, w=m.window)} | FT better in {(g2 < 0).mean() * 100:.0f}% of pairs |"]
 
 # ---- variants on the same (ticker, window) pairs: log-return input, temperature, lookback, samples
-var = {"lr": "log-return input", "t05": "temperature 0.5", "lb200": "lookback 200", "lb100": "lookback 100", "s20": "20 samples", "realdates": "real trading dates for y_timestamp", "lr40": "log-return input, all 40 windows"}
+var = {"lr": "log-return input", "t05": "temperature 0.5", "lb200": "lookback 200", "lb100": "lookback 100", "s20": "20 samples", "realdates": "real trading dates for y_timestamp", "lr40": "log-return input, all 40 windows", "base": "Kronos-base zero-shot, last 12 windows", "base40": "Kronos-base zero-shot, all 40 windows"}
 rows4 = []
 for tag, label in var.items():
     f = BASE / f"results/rolling/paths_{tag}.csv"

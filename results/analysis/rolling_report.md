@@ -152,3 +152,5 @@ Per period:
 | 20 samples | 360 | 9.75 | 9.76 | +0.00 [-0.12, +0.12] | 4.82 | 51.9 | 46.7 |
 | real trading dates for y_timestamp | 360 | 9.75 | 9.76 | +0.00 [-0.00, +0.01] | 4.82 | 51.9 | 52.8 |
 | log-return input, all 40 windows | 1200 | 9.01 | 6.78 | -2.23 [-3.48, -1.18] | 4.35 | 51.6 | 47.3 |
+| Kronos-base zero-shot, last 12 windows | 360 | 9.75 | 13.34 | +3.59 [+3.10, +4.11] | 4.82 | 51.9 | 51.1 |
+| Kronos-base zero-shot, all 40 windows | 1200 | 9.01 | 12.16 | +3.15 [+2.84, +3.46] | 4.35 | 51.6 | 52.8 |
