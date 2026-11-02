@@ -52,8 +52,9 @@ One period = 20 trading days. Cost 0.1% per side per trade. Long-only = hold sto
 | Strategy | Total return % | Ann. Sharpe | Mean period % [95% CI] | Max DD % |
 |---|---|---|---|---|
 | Equal-weight buy & hold | 43.9 | 0.72 | 1.04 [-0.57, 2.56] | -15.6 |
-| Kronos long-only | 10.6 | 0.57 | 0.27 [-0.25, 0.79] | -5.1 |
-| Kronos L/S | -40.2 | -1.02 | -1.19 [-2.49, 0.03] | -42.8 |
+| VN30 ETF E1VFVN30 buy & hold (close, no dividends, gappy data, dates align to earliest ticker start) | 39.1 | 0.67 | 0.95 [-0.56, 2.55] | -11.1 |
+| Kronos long-only | 10.6 | 0.57 | 0.27 [-0.24, 0.77] | -5.1 |
+| Kronos L/S | -40.2 | -1.02 | -1.19 [-2.44, 0.09] | -42.8 |
 | 5d-momentum L/S (baseline) | -33.0 | -0.95 | -0.94 [-2.01, 0.17] | -32.3 |
 
 Cost sensitivity (total return %, per side): 0.0% / 0.1% / 0.3% / 0.5%
@@ -64,7 +65,7 @@ Cost sensitivity (total return %, per side): 0.0% / 0.1% / 0.3% / 0.5%
 | Kronos L/S | -35.2 | -40.2 | -49.2 | -56.8 |
 | 5d-momentum L/S | -27.4 | -33.0 | -43.0 | -51.6 |
 
-Kronos long-only minus buy & hold, mean per period: -0.78 [-1.94, 0.43] pp over 40 periods.
+Kronos long-only minus buy & hold, mean per period: -0.78 [-1.93, 0.44] pp over 40 periods.
 
 Per period:
 
@@ -117,9 +118,9 @@ Per period:
 
 | Metric | Zero-shot | Fine-tuned | Naive |
 |---|---|---|---|
-| MAPE % | 9.75 [8.18, 11.40] | 9.80 [8.68, 11.06] | 4.82 [3.90, 5.86] |
-| 20d direction hit % | 51.9 [44.4, 58.6] | 47.5 [40.6, 54.4] | always-up 48.1 [35.3, 60.6] |
-| FT - ZS MAPE (pp) | | 0.05 [-1.26, 1.40] | FT better in 45% of pairs |
+| MAPE % | 9.75 [8.17, 11.42] | 9.80 [8.67, 11.06] | 4.82 [3.90, 5.88] |
+| 20d direction hit % | 51.9 [45.0, 58.9] | 47.5 [40.6, 54.2] | always-up 48.1 [35.3, 60.8] |
+| FT - ZS MAPE (pp) | | 0.05 [-1.24, 1.44] | FT better in 45% of pairs |
 
 ## 3. Fine-tuned (vn30_v3_cleansplit) vs zero-shot, out-of-training windows only
 
@@ -127,9 +128,9 @@ Per period:
 
 | Metric | Zero-shot | Fine-tuned | Naive |
 |---|---|---|---|
-| MAPE % | 9.75 [8.19, 11.36] | 9.02 [7.61, 10.55] | 4.82 [3.89, 5.85] |
-| 20d direction hit % | 51.9 [44.7, 58.6] | 45.8 [38.1, 54.7] | always-up 48.1 [35.6, 60.6] |
-| FT - ZS MAPE (pp) | | -0.73 [-1.46, -0.05] | FT better in 46% of pairs |
+| MAPE % | 9.75 [8.19, 11.44] | 9.02 [7.62, 10.56] | 4.82 [3.90, 5.84] |
+| 20d direction hit % | 51.9 [45.0, 58.6] | 45.8 [38.1, 54.4] | always-up 48.1 [35.6, 60.3] |
+| FT - ZS MAPE (pp) | | -0.73 [-1.45, -0.07] | FT better in 46% of pairs |
 
 ## 3. Fine-tuned (grouped_v3 (banks + others)) vs zero-shot, out-of-training windows only
 
@@ -137,20 +138,20 @@ Per period:
 
 | Metric | Zero-shot | Fine-tuned | Naive |
 |---|---|---|---|
-| MAPE % | 9.75 [8.19, 11.42] | 10.06 [8.39, 11.87] | 4.82 [3.92, 5.88] |
-| 20d direction hit % | 51.9 [45.0, 58.9] | 47.5 [39.2, 54.7] | always-up 48.1 [35.0, 60.3] |
+| MAPE % | 9.75 [8.19, 11.41] | 10.06 [8.37, 11.84] | 4.82 [3.90, 5.86] |
+| 20d direction hit % | 51.9 [44.7, 58.6] | 47.5 [39.4, 55.0] | always-up 48.1 [35.0, 61.1] |
 | FT - ZS MAPE (pp) | | 0.30 [-0.16, 0.82] | FT better in 44% of pairs |
 
 ## 4. Variants vs default zero-shot (same pairs)
 
 | Variant | Pairs | Default MAPE % | Variant MAPE % | Variant - default (pp) | Naive MAPE % | Default dir % | Variant dir % |
 |---|---|---|---|---|---|---|---|
-| log-return input | 360 | 9.75 | 8.08 | -1.67 [-3.19, -0.22] | 4.82 | 51.9 | 50.3 |
-| temperature 0.5 | 360 | 9.75 | 9.07 | -0.69 [-0.94, -0.38] | 4.82 | 51.9 | 46.7 |
-| lookback 200 | 360 | 9.75 | 6.96 | -2.80 [-3.43, -2.14] | 4.82 | 51.9 | 50.0 |
-| lookback 100 | 360 | 9.75 | 9.31 | -0.44 [-1.51, +0.64] | 4.82 | 51.9 | 54.4 |
-| 20 samples | 360 | 9.75 | 9.76 | +0.00 [-0.12, +0.12] | 4.82 | 51.9 | 46.7 |
+| log-return input | 360 | 9.75 | 8.08 | -1.67 [-3.25, -0.22] | 4.82 | 51.9 | 50.3 |
+| temperature 0.5 | 360 | 9.75 | 9.07 | -0.69 [-0.93, -0.39] | 4.82 | 51.9 | 46.7 |
+| lookback 200 | 360 | 9.75 | 6.96 | -2.80 [-3.42, -2.12] | 4.82 | 51.9 | 50.0 |
+| lookback 100 | 360 | 9.75 | 9.31 | -0.44 [-1.56, +0.63] | 4.82 | 51.9 | 54.4 |
+| 20 samples | 360 | 9.75 | 9.76 | +0.00 [-0.13, +0.13] | 4.82 | 51.9 | 46.7 |
 | real trading dates for y_timestamp | 360 | 9.75 | 9.76 | +0.00 [-0.00, +0.01] | 4.82 | 51.9 | 52.8 |
-| log-return input, all 40 windows | 1200 | 9.01 | 6.78 | -2.23 [-3.48, -1.18] | 4.35 | 51.6 | 47.3 |
-| Kronos-base zero-shot, last 12 windows | 360 | 9.75 | 13.34 | +3.59 [+3.10, +4.11] | 4.82 | 51.9 | 51.1 |
-| Kronos-base zero-shot, all 40 windows | 1200 | 9.01 | 12.16 | +3.15 [+2.84, +3.46] | 4.35 | 51.6 | 52.8 |
+| log-return input, all 40 windows | 1200 | 9.01 | 6.78 | -2.23 [-3.44, -1.16] | 4.35 | 51.6 | 47.3 |
+| Kronos-base zero-shot, last 12 windows | 360 | 9.75 | 13.34 | +3.59 [+3.10, +4.12] | 4.82 | 51.9 | 51.1 |
+| Kronos-base zero-shot, all 40 windows | 1200 | 9.01 | 12.16 | +3.15 [+2.83, +3.47] | 4.35 | 51.6 | 52.8 |

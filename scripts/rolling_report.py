@@ -95,6 +95,13 @@ for k, g in d.groupby("window", sort=False):
     rows.append({"window": k, "start": g.start_date.min(), "bh_ew": ew, "kronos_long": lo,
                  "kronos_ls": ls, "mom_ls": ls_mom})
 bt = pd.DataFrame(rows).sort_values("start")
+# VN30 ETF buy & hold over the same windows; ETF has gaps (Yahoo), so use last price on or before each date
+etf = pd.read_csv(BASE / "data/benchmark/E1VFVN30.csv", parse_dates=["date"]).set_index("date").close
+cal = pd.read_csv(BASE / "data/processed/VCB.csv", parse_dates=["date"]).set_index("date").index
+def etf_ret(s):
+    i = cal.searchsorted(pd.Timestamp(s))  # start_date.min() over tickers may be a day VCB lacks
+    return etf.asof(cal[i + PRED_LEN - 1]) / etf.asof(cal[i - 1]) - 1
+bt["etf"] = bt.start.map(etf_ret)
 ppy = 252 / PRED_LEN
 
 out += ["", "## 2. Backtest with real Kronos signals\n",
@@ -103,7 +110,7 @@ out += ["", "## 2. Backtest with real Kronos signals\n",
         f"L/S = long top {TOPK}, short bottom {TOPK} by predicted 20d return, dollar-neutral. "
         "Sharpe annualised from period returns. Mean per-period return CI is bootstrap.\n",
         "| Strategy | Total return % | Ann. Sharpe | Mean period % [95% CI] | Max DD % |", "|---|---|---|---|---|"]
-for name, col in [("Equal-weight buy & hold", "bh_ew"), ("Kronos long-only", "kronos_long"),
+for name, col in [("Equal-weight buy & hold", "bh_ew"), ("VN30 ETF E1VFVN30 buy & hold (close, no dividends, gappy data, dates align to earliest ticker start)", "etf"), ("Kronos long-only", "kronos_long"),
                   ("Kronos L/S", "kronos_ls"), ("5d-momentum L/S (baseline)", "mom_ls")]:
     r = bt[col].to_numpy()
     eq = np.cumprod(1 + r)
